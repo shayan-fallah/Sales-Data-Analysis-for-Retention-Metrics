@@ -3,7 +3,7 @@ Digitoon internship final project
 
 # You can see the architecture of this project here :
 
-<img src="https://github.com/shayan-fallah/Sales-Data-Analysis-for-Retention-Metrics/blob/main/Network%20Architecture.jpg" style='height: 50%; width: 50%; object-fit: contain' border="10"/>
+<img src="https://github.com/shayan-fallah/Sales-Data-Analysis-for-Retention-Metrics/blob/main/Network%20Architecture.jpg" style='height: 70%; width: 70%; object-fit: contain' border="10"/>
 
 
 # Brief Explanation:
