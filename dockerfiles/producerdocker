@@ -1,0 +1,11 @@
+FROM python:3.9-alpine
+
+WORKDIR /app
+COPY pythonscripts/producer.py /app
+COPY pythonscripts/requirements_proudcer.txt /app
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements_proudcer.txt
+
+CMD ["python", "-u", "producer.py"]
+

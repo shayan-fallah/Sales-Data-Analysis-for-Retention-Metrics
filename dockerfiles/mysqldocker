@@ -1,0 +1,15 @@
+# Use the official MySQL image as a base
+FROM mysql:latest
+
+# Copy the SQL script and shell script into the container
+COPY sqlscripts/mom_retention.sql /opt/sql_scripts/
+COPY sqlscripts/repurchase_rate.sql /opt/sql_scripts/
+COPY sqlscripts/retention_cohorts.sql /opt/sql_scripts/
+
+
+
+
+
+
+
+

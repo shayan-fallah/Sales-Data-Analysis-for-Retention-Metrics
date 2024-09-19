@@ -1,0 +1,10 @@
+FROM python:3.9-alpine
+
+WORKDIR /app
+COPY pythonscripts/consumer.py /app
+COPY pythonscripts/requirements_consumer.txt /app
+
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements_consumer.txt
+
+CMD ["python", "-u", "consumer.py"]

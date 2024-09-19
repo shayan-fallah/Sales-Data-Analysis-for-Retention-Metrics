@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - kafka_network
+
+  kafka:
+    image: wurstmeister/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    networks:
+      - kafka_network
+    depends_on:
+      - zookeeper
+
+  producer:
+    build:
+      context: ./dockerfiles
+      dockerfile: producerdocker
+    environment:
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+    networks:
+      - kafka_network
+    depends_on:
+      - kafka
+
+  consumer:
+    build:
+      context: ./dockerfiles
+      dockerfile: consumerdocker
+    environment:
+      - KAFKA_TOPIC=${KAFKA_TOPIC}
+      - KAFKA_BROKER=${KAFKA_BROKER}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    networks:
+      - kafka_network
+    depends_on:
+      - kafka  
+
+  mysql:
+    build:
+      context: ./dockerfiles
+      dockerfile: mysqldocker
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+    networks:
+      - kafka_network
+    volumes:
+      - ./sqldata:/var/lib/mysql
+
+  metabase:
+    image: docker.arvancloud.ir/metabase/metabase:latest
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: mysql
+      MB_DB_DBNAME: ${MYSQL_DATABASE}
+      MB_DB_PORT: 3306
+      MB_DB_USER: ${MYSQL_USER}
+      MB_DB_PASS: ${MYSQL_PASSWORD}
+      MB_DB_HOST: ${MYSQL_HOST}
+    networks:
+      - kafka_network
+    depends_on:
+      - mysql
+    
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - kafka_network
+      
+     
+  airflow-webserver:
+    build:
+      context: ./dockerfiles
+      dockerfile: airflowdocker
+    container_name: airflow-webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_CONN_MYSQL_CONN=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}/${MYSQL_DATABASE}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+      airflow db init && 
+      airflow webserver"
+    networks:
+      - kafka_network
+    depends_on:
+      - mysql
+      - postgres
+    user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+
+  airflow-scheduler:
+    build:
+      context: ./dockerfiles
+      dockerfile: airflowdocker
+    container_name: airflow-scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW_CONN_MYSQL_CONN=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}/${MYSQL_DATABASE}
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    command: >
+      bash -c "
+      airflow db init && 
+      airflow scheduler"
+    networks:
+      - kafka_network
+    depends_on:
+      - mysql
+      - postgres
+    user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+    
+    
+networks:
+  kafka_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+
