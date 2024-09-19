@@ -6,7 +6,7 @@ Digitoon internship final project
 <img src="https://github.com/shayan-fallah/Sales-Data-Analysis-for-Retention-Metrics/blob/main/Network%20Architecture.jpg" width="100" height="100" border="10"/>
 ![alt text][image]
 
-[image]: https://github.com/shayan-fallah/Sales-Data-Analysis-for-Retention-Metrics/blob/main/Network%20Architecture.jpg "Title text"
+[image]: https://github.com/shayan-fallah/Sales-Data-Analysis-for-Retention-Metrics/blob/main/Network%20Architecture.jpg
 
 # Brief Explanation:
 In this project we generate fake transactions and Analyse these generated transactions based on the metrics we've been given.
